@@ -10,6 +10,7 @@ fn main() {
     let mut save_path = None;
     let mut keyword_filter = None;
     let mut unit_filter = None;
+    let mut realtime_mode = false;
 
     for arg in &args[1..] {
         match arg.as_str() {
@@ -20,6 +21,7 @@ fn main() {
                 println!("  -s <path> Save logs to the specified path");
                 println!("  -k <keyword> Filter logs by keyword");
                 println!("  -u <unit> Filter logs by unit");
+                println!("  -r        Enable real-time logging mode");
                 return;
             }
             "-s" => {
@@ -46,11 +48,17 @@ fn main() {
                     return;
                 }
             }
+            "-r" => {
+                realtime_mode = true;
+            }
             _ => {}
         }
     }
 
-    loop {
+    if realtime_mode {
+        loop {
+        }
+    } else {
         let output = Command::new("journalctl")
             .arg("-n")
             .arg("1000")
@@ -76,7 +84,5 @@ fn main() {
                 println!("{}", log);
             }
         }
-
-        std::thread::sleep(Duration::from_secs(1));
     }
 }

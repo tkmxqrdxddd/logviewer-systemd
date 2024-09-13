@@ -7,10 +7,10 @@ cargo install --path .
 sudo mv /home/$USER/.cargo/bin/logviewer /usr/bin/
 
 # Check the user's shell
-if [ "$SHELL" == "/bin/bash" ]; then
+if [ "$SHELL" == "/bin/bash/" ]; then
     # Restart bash shell
     exec bash
-elif [ "$SHELL" == "/bin/zsh" ]; then
+elif [ "$SHELL" == "/bin/zsh/" ]; then
     # Restart zsh shell
     exec zsh
 else
