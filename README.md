@@ -7,10 +7,10 @@ Logviewer-systemd is a command-line tool that filters and saves system logs base
 
 | Command | Description |
 | --- | --- |
-| `logmaster --help` | Display the help message. |
-| `logmaster -s <path>` | Save logs to the specified path. |
-| `logmaster -k <keyword>` | Filter logs by the specified keyword. |
-| `logmaster -u <unit>` | Filter logs by the specified unit. |
+| `logmviewer --help` | Display the help message. |
+| `logmviewer -s <path>` | Save logs to the specified path. |
+| `logmviewer -k <keyword>` | Filter logs by the specified keyword. |
+| `logmviewer -u <unit>` | Filter logs by the specified unit. |
 
 ## Installation 
 ```bash
