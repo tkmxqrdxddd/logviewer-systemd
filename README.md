@@ -14,5 +14,6 @@ Logviewer-systemd is a command-line tool that filters and saves system logs base
 
 ## Installation 
 ```bash
+$ cd logviewer-systemd
 $ sudo ./build.sh
 
