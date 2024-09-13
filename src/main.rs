@@ -1,180 +1,82 @@
-use crossterm::{
-    event::{self, Event, KeyCode, KeyModifiers},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
-use std::io;
+use std::env;
+use std::fs::File;
+use std::io::prelude::*;
 use std::process::Command;
-use tui::{
-    backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
-    Terminal,
-};
+use std::time::Duration;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // ... main function content ...
-}
+fn main() {
+    let args: Vec<String> = env::args().collect();
 
-enum InputMode {
-    Normal,
-    Editing,
-}
+    let mut save_path = None;
+    let mut keyword_filter = None;
+    let mut unit_filter = None;
 
-struct App {
-    input: String,
-    logs: Vec<String>,
-    input_mode: InputMode,
-    filter: String,
-}
-
-impl App {
-    fn new() -> App {
-        App {
-            input: String::new(),
-            logs: Vec::new(),
-            input_mode: InputMode::Normal,
-            filter: String::new(),
+    for arg in &args[1..] {
+        match arg.as_str() {
+            "--help" => {
+                println!("Usage: logmaster [options]");
+                println!("Options:");
+                println!("  --help    Display this help message");
+                println!("  -s <path> Save logs to the specified path");
+                println!("  -k <keyword> Filter logs by keyword");
+                println!("  -u <unit> Filter logs by unit");
+                return;
+            }
+            "-s" => {
+                if let Some(next_arg) = args.get(args.iter().position(|a| a == arg).map_or(0, |i| i + 1)) {
+                    save_path = Some(next_arg.clone());
+                } else {
+                    println!("Error: Missing path for -s option");
+                    return;
+                }
+            }
+            "-k" => {
+                if let Some(next_arg) = args.get(args.iter().position(|a| a == arg).map_or(0, |i| i + 1)) {
+                    keyword_filter = Some(next_arg.clone());
+                } else {
+                    println!("Error: Missing keyword for -k option");
+                    return;
+                }
+            }
+            "-u" => {
+                if let Some(next_arg) = args.get(args.iter().position(|a| a == arg).map_or(0, |i| i + 1)) {
+                    unit_filter = Some(next_arg.clone());
+                } else {
+                    println!("Error: Missing unit for -u option");
+                    return;
+                }
+            }
+            _ => {}
         }
     }
 
-    fn fetch_logs(&mut self) {
+    loop {
         let output = Command::new("journalctl")
             .arg("-n")
             .arg("1000")
             .output()
             .expect("Failed to execute journalctl");
 
-        self.logs = String::from_utf8_lossy(&output.stdout)
+        let logs = String::from_utf8_lossy(&output.stdout)
             .lines()
             .map(|s| s.to_string())
-            .collect();
-    }
+            .filter(|log| {
+                keyword_filter.as_ref().map_or(true, |k| log.contains(k))
+                    && unit_filter.as_ref().map_or(true, |u| log.contains(u))
+            })
+            .collect::<Vec<String>>();
 
-    fn filter_logs(&self) -> Vec<String> {
-        self.logs
-            .iter()
-            .filter(|log| log.to_lowercase().contains(&self.filter.to_lowercase()))
-            .cloned()
-            .collect()
-    }
-
-    fn save_logs(&self) -> io::Result<()> {
-        let filtered_logs = self.filter_logs();
-        std::fs::write("filtered_logs.txt", filtered_logs.join("\n"))
-    }
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-
-    let mut app = App::new();
-    app.fetch_logs();
-
-    loop {
-        terminal.draw(|f| {
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .margin(2)
-                .constraints(
-                    [
-                        Constraint::Length(1),
-                        Constraint::Length(3),
-                        Constraint::Min(1),
-                    ]
-                    .as_ref(),
-                )
-                .split(f.size());
-
-            let (msg, style) = match app.input_mode {
-                InputMode::Normal => (
-                    vec![
-                        Span::raw("Press "),
-                        Span::styled("q", Style::default().add_modifier(Modifier::BOLD)),
-                        Span::raw(" to exit, "),
-                        Span::styled("i", Style::default().add_modifier(Modifier::BOLD)),
-                        Span::raw(" to start editing, "),
-                        Span::styled("Ctrl+S", Style::default().add_modifier(Modifier::BOLD)),
-                        Span::raw(" to save logs."),
-                    ],
-                    Style::default().add_modifier(Modifier::RAPID_BLINK),
-                ),
-                InputMode::Editing => (
-                    vec![
-                        Span::raw("Press "),
-                        Span::styled("Esc", Style::default().add_modifier(Modifier::BOLD)),
-                        Span::raw(" to stop editing, "),
-                        Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
-                        Span::raw(" to apply filter"),
-                    ],
-                    Style::default(),
-                ),
-            };
-            let mut text = Text::from(Spans::from(msg));
-            text.patch_style(style);
-            let help_message = Paragraph::new(text);
-            f.render_widget(help_message, chunks[0]);
-
-            let input = Paragraph::new(app.input.as_ref())
-                .style(match app.input_mode {
-                    InputMode::Normal => Style::default(),
-                    InputMode::Editing => Style::default().fg(Color::Yellow),
-                })
-                .block(Block::default().borders(Borders::ALL).title("Filter"));
-            f.render_widget(input, chunks[1]);
-
-            let logs: Vec<ListItem> = app
-                .filter_logs()
-                .iter()
-                .map(|log| ListItem::new(log.as_str()))
-                .collect();
-            let logs = List::new(logs).block(Block::default().borders(Borders::ALL).title("Logs"));
-            f.render_widget(logs, chunks[2]);
-
-            if let InputMode::Editing = app.input_mode {
-                f.set_cursor(chunks[1].x + app.input.len() as u16 + 1, chunks[1].y + 1)
+        if let Some(path) = &save_path {
+            let mut file = File::create(path).expect("Failed to create save file");
+            for log in logs {
+                file.write_all(format!("{}\n", log).as_bytes()).expect("Failed to write to save file");
             }
-        })?;
-
-        if let Event::Key(key) = event::read()? {
-            match app.input_mode {
-                InputMode::Normal => match key.code {
-                    KeyCode::Char('q') => break,
-                    KeyCode::Char('i') => app.input_mode = InputMode::Editing,
-                    KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
-                        app.save_logs()?;
-                    }
-                    _ => {}
-                },
-                InputMode::Editing => match key.code {
-                    KeyCode::Enter => {
-                        app.filter = app.input.drain(..).collect();
-                    }
-                    KeyCode::Char(c) => {
-                        app.input.push(c);
-                    }
-                    KeyCode::Backspace => {
-                        app.input.pop();
-                    }
-                    KeyCode::Esc => {
-                        app.input_mode = InputMode::Normal;
-                    }
-                    _ => {}
-                },
+        } else {
+            for log in logs {
+                println!("{}", log);
             }
         }
+
+        std::thread::sleep(Duration::from_secs(1));
     }
-
-    disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-    terminal.show_cursor()?;
-
-    Ok(())
 }
-
