@@ -2,7 +2,6 @@ use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::process::Command;
-use std::time::Duration;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -56,9 +55,39 @@ fn main() {
     }
 
     if realtime_mode {
+        // Fetch and process logs in real-time
         loop {
+            let output = Command::new("journalctl")
+                .arg("-n")
+                .arg("1000")
+                .output()
+                .expect("Failed to execute journalctl");
+
+            let logs = String::from_utf8_lossy(&output.stdout)
+                .lines()
+                .map(|s| s.to_string())
+                .filter(|log| {
+                    keyword_filter.as_ref().map_or(true, |k| log.contains(k))
+                        && unit_filter.as_ref().map_or(true, |u| log.contains(u))
+                })
+                .collect::<Vec<String>>();
+
+            if let Some(path) = &save_path {
+                let mut file = File::create(path).expect("Failed to create save file");
+                for log in logs {
+                    file.write_all(format!("{}\n", log).as_bytes()).expect("Failed to write to save file");
+                }
+            } else {
+                for log in logs {
+                    println!("{}", log);
+                }
+            }
+
+            // Sleep for a short duration before fetching logs again
+            std::thread::sleep(std::time::Duration::from_secs(5));
         }
     } else {
+        // Fetch and process logs once
         let output = Command::new("journalctl")
             .arg("-n")
             .arg("1000")
