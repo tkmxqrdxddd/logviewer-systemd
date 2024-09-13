@@ -1,6 +1,6 @@
-# Logmaster
+# Logviewer-systemd
 
-Logmaster is a command-line tool that filters and saves system logs based on specified criteria.
+Logviewer-systemd is a command-line tool that filters and saves system logs based on specified criteria.
 
 ## Usage
 
