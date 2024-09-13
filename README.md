@@ -15,7 +15,7 @@ Logviewer-systemd is a command-line tool that filters and saves system logs base
 
 ## Dependencies
 
-(https://www.rust-lang.org/tools/install)
+[Rust language](https://www.rust-lang.org/tools/install)
 
 ## Installation 
 ```bash
