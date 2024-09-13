@@ -1,1 +1,1 @@
-This program was fully made by me, there is no contributor.
+This program was fully made by me, there is no contributor other than myself.
