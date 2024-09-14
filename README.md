@@ -2,6 +2,8 @@
 
 Logviewer-systemd is a command-line tool that filters and saves system logs based on specified criteria.
 
+#If it does not show anything, run it as root
+
 ## Usage
 
 
