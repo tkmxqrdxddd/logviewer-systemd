@@ -14,7 +14,7 @@ fn main() {
     for arg in &args[1..] {
         match arg.as_str() {
             "--help" => {
-                println!("Usage: logmaster [options]");
+                println!("Usage: logviewer [options]");
                 println!("Options:");
                 println!("  --help    Display this help message");
                 println!("  -s <path> Save logs to the specified path");
@@ -55,7 +55,6 @@ fn main() {
     }
 
     if realtime_mode {
-        // Fetch and process logs in real-time
         loop {
             let output = Command::new("journalctl")
                 .arg("-n")
@@ -83,11 +82,9 @@ fn main() {
                 }
             }
 
-            // Sleep for a short duration before fetching logs again
             std::thread::sleep(std::time::Duration::from_secs(5));
         }
     } else {
-        // Fetch and process logs once
         let output = Command::new("journalctl")
             .arg("-n")
             .arg("1000")
