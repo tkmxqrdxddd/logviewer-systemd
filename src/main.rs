@@ -13,14 +13,14 @@ fn main() {
 
     for arg in &args[1..] {
         match arg.as_str() {
-            "--help" => {
+            "--help" | "-h" => {
                 println!("Usage: logviewer [options]");
                 println!("Options:");
-                println!("  --help    Display this help message");
-                println!("  -s <path> Save logs to the specified path");
-                println!("  -k <keyword> Filter logs by keyword");
-                println!("  -u <unit> Filter logs by unit");
-                println!("  -r        Enable real-time logging mode");
+                println!("  --help, -h    Display this help message");
+                println!("  -s <path>     Save logs to the specified path");
+                println!("  -k <keyword>  Filter logs by keyword");
+                println!("  -u <unit>     Filter logs by unit");
+                println!("  -r            Enable real-time logging mode");
                 return;
             }
             "-s" => {
