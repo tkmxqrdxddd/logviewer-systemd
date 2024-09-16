@@ -4,5 +4,5 @@
 cargo install --path .
 
 # Move the binary to /usr/bin/ after installation
-sudo mv /home/$USER/.cargo/bin/logviewer /usr/bin/
+sudo cp /home/$USER/.cargo/bin/logviewer /usr/bin/
 
