@@ -1,7 +1,7 @@
 # Maintainer: Jan Fidra <tkmxqrd@gmail.com>
 
 pkgname=logviewer
-pkgver=1.0.0
+pkgver=alpha
 pkgrel=1
 pkgdesc="A simple log viewer and filter for journalctl"
 arch=('x86_64')
