@@ -20,20 +20,20 @@ Logviewer-systemd is a command-line tool that filters and saves system logs base
 
 [Rust language](https://www.rust-lang.org/tools/install)
 
-## Installation 
-# From source:
+# Installation 
+## From source:
 ```bash
 $ git clone https://github.com/tkmxqrdxddd/logviewer-systemd
 $ cd logviewer-systemd
 $ cargo install --path .
 ```
-# Arch Linux 
+## Arch Linux 
 ```bash
 $ git clone https://github.com/tkmxqrdxddd/logviewer-systemd
 $ cd logviewer-systemd
 $ makepkg -si
 ```
-# Debian
+## Debian
 ```bash
 wget https://github.com/tkmxqrdxddd/logviewer-systemd/releases/download/v1.0.0/logviewer_1.0.0_amd64.deb
 sudo dpkg -i https://github.com/tkmxqrdxddd/logviewer-systemd/releases/download/v1.0.0/logviewer_1.0.0_amd64.deb
