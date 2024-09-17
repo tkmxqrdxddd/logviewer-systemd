@@ -25,7 +25,7 @@ Logviewer-systemd is a command-line tool that filters and saves system logs base
 ```bash
 $ git clone https://github.com/tkmxqrdxddd/logviewer-systemd
 $ cd logviewer-systemd
-$ cargo install --path -
+$ cargo install --path .
 ```
 # Arch Linux 
 ```bash
