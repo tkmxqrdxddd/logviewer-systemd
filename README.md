@@ -28,6 +28,14 @@ $ cd logviewer-systemd
 $ cargo install --path .
 ```
 ## Arch Linux 
+
+Use AUR Helper
+```bash
+$ paru -logviewer-systemd
+yay -S logviewer-systemd
+```
+Or install manually
+
 ```bash
 $ git clone https://github.com/tkmxqrdxddd/logviewer-systemd
 $ cd logviewer-systemd
