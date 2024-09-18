@@ -44,5 +44,6 @@ $ makepkg -si
 ## Debian
 ```bash
 wget https://github.com/tkmxqrdxddd/logviewer-systemd/releases/download/v1.0.0/logviewer_1.0.0_amd64.deb
-sudo dpkg -i https://github.com/tkmxqrdxddd/logviewer-systemd/releases/download/v1.0.0/logviewer_1.0.0_amd64.deb
+sudo dkpg -i 
+logviewer_1.0.0_amd64.deb
 
