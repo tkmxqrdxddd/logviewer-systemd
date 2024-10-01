@@ -31,7 +31,7 @@ $ cargo install --path .
 
 Use AUR Helper
 ```bash
-$ paru -logviewer-systemd
+$ paru -S logviewer-systemd
 $ yay -S logviewer-systemd
 ```
 Or install manually
