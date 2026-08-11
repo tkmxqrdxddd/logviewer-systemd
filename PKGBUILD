@@ -10,7 +10,7 @@ license=('GPL3')
 depends=('gcc-libs')
 makedepends=('rust' 'cargo')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/tkmxqrdxddd/logviewer-systemd/archive/v$pkgver.tar.gz")
-sha256sums=('6b1e3de047664f6f39ffcd381248558b739deb4bc1d9f2f44996b455859b2c62')
+sha256sums=('7b6de27f64e55d206f412dbdac2fe9168fb5368e29b1a4ce82af936830f4a689')
 
 build() {
     cd "$pkgname-$pkgver"
