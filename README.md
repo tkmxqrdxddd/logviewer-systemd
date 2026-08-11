@@ -12,8 +12,10 @@ Logviewer-systemd is a command-line tool that filters and saves system logs base
 | `logviewer --help` | Display the help message. |
 | `logviewer -s <path>` | Save logs to the specified path. |
 | `logviewer -k <keyword>` | Filter logs by the specified keyword. |
-| `logviewer -u <unit>` | Filter logs by the specified unit. |
-| `logviewer -r` | Logging in real time |
+| `logviewer -u <unit>` | Show logs for the specified systemd unit. |
+| `logviewer -n <lines>` | Number of lines to read from the journal (default: 1000). |
+| `logviewer -b <boot>` | Show logs from a specific boot, e.g. `-b -1`. |
+| `logviewer -r` | Follow new log entries in real time. |
 
 
 ## Dependencies
@@ -44,5 +46,5 @@ $ makepkg -si
 ## Debian
 ```bash
 wget https://github.com/tkmxqrdxddd/logviewer-systemd/releases/download/v1.0.0/logviewer_1.0.0_amd64.deb
-sudo dkpg -i logviewer_1.0.0_amd64.deb
+sudo dpkg -i logviewer_1.0.0_amd64.deb
 

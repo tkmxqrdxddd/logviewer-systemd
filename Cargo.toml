@@ -4,4 +4,4 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-crossterm = "0.25"
+clap = { version = "4", features = ["derive"] }

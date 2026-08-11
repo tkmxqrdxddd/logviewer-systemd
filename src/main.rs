@@ -1,114 +1,120 @@
-use std::env;
 use std::fs::File;
-use std::io::prelude::*;
-use std::process::Command;
+use std::io::{BufRead, BufReader, Write};
+use std::process::{Command, Stdio};
+
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(version, about = "A simple log viewer and filter for journalctl")]
+struct Args {
+    /// Save logs to the specified path
+    #[arg(short, long)]
+    save: Option<String>,
+
+    /// Filter logs by keyword
+    #[arg(short, long)]
+    keyword: Option<String>,
+
+    /// Show logs for a systemd unit (forwarded to journalctl -u)
+    #[arg(short, long)]
+    unit: Option<String>,
+
+    /// Number of lines to read from the journal
+    #[arg(short = 'n', long, default_value_t = 1000)]
+    lines: usize,
+
+    /// Start at a specific boot (forwarded to journalctl -b), e.g. "-1"
+    #[arg(short, long)]
+    boot: Option<String>,
+
+    /// Follow new log entries as they are written
+    #[arg(short = 'r', long)]
+    follow: bool,
+}
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args = Args::parse();
 
-    let mut save_path = None;
-    let mut keyword_filter = None;
-    let mut unit_filter = None;
-    let mut realtime_mode = false;
+    let mut command = Command::new("journalctl");
+    command.arg("-n").arg(args.lines.to_string());
+    if let Some(unit) = &args.unit {
+        command.arg("-u").arg(unit);
+    }
+    if let Some(boot) = &args.boot {
+        command.arg("-b").arg(boot);
+    }
+    if args.follow {
+        command.arg("-f");
+    }
 
-    for arg in &args[1..] {
-        match arg.as_str() {
-            "--help" | "-h" => {
-                println!("Usage: logviewer [options]");
-                println!("Options:");
-                println!("  --help, -h    Display this help message");
-                println!("  -s <path>     Save logs to the specified path");
-                println!("  -k <keyword>  Filter logs by keyword");
-                println!("  -u <unit>     Filter logs by unit");
-                println!("  -r            Enable real-time logging mode");
-                return;
-            }
-            "-s" => {
-                if let Some(next_arg) = args.get(args.iter().position(|a| a == arg).map_or(0, |i| i + 1)) {
-                    save_path = Some(next_arg.clone());
-                } else {
-                    println!("Error: Missing path for -s option");
-                    return;
+    let mut child = match command
+        .stdout(Stdio::piped())
+        // journalctl is a pager-aware program; avoid it detecting a tty
+        .env("PAGER", "cat")
+        .spawn()
+    {
+        Ok(child) => child,
+        Err(err) => {
+            eprintln!("Failed to execute journalctl: {err}");
+            std::process::exit(1);
+        }
+    };
+
+    let stdout = match child.stdout.take() {
+        Some(stdout) => stdout,
+        None => {
+            eprintln!("Failed to capture journalctl output");
+            std::process::exit(1);
+        }
+    };
+
+    let mut file = match &args.save {
+        Some(path) => Some(open_save_file(path)),
+        None => None,
+    };
+
+    for line in BufReader::new(stdout).lines() {
+        match line {
+            Ok(line) => {
+                if filter(&line, &args) {
+                    output(&line, &mut file);
                 }
             }
-            "-k" => {
-                if let Some(next_arg) = args.get(args.iter().position(|a| a == arg).map_or(0, |i| i + 1)) {
-                    keyword_filter = Some(next_arg.clone());
-                } else {
-                    println!("Error: Missing keyword for -k option");
-                    return;
-                }
+            Err(err) => {
+                eprintln!("Failed to read journalctl output: {err}");
+                break;
             }
-            "-u" => {
-                if let Some(next_arg) = args.get(args.iter().position(|a| a == arg).map_or(0, |i| i + 1)) {
-                    unit_filter = Some(next_arg.clone());
-                } else {
-                    println!("Error: Missing unit for -u option");
-                    return;
-                }
-            }
-            "-r" => {
-                realtime_mode = true;
-            }
-            _ => {}
         }
     }
 
-    if realtime_mode {
-        loop {
-            let output = Command::new("journalctl")
-                .arg("-n")
-                .arg("1000")
-                .output()
-                .expect("Failed to execute journalctl");
+    match child.wait() {
+        Ok(status) if status.success() => {}
+        Ok(status) => eprintln!("journalctl exited with status {status}"),
+        Err(err) => eprintln!("Failed to wait for journalctl: {err}"),
+    }
+}
 
-            let logs = String::from_utf8_lossy(&output.stdout)
-                .lines()
-                .map(|s| s.to_string())
-                .filter(|log| {
-                    keyword_filter.as_ref().map_or(true, |k| log.contains(k))
-                        && unit_filter.as_ref().map_or(true, |u| log.contains(u))
-                })
-                .collect::<Vec<String>>();
+fn filter(line: &str, args: &Args) -> bool {
+    args.keyword.as_ref().map_or(true, |k| line.contains(k))
+}
 
-            if let Some(path) = &save_path {
-                let mut file = File::create(path).expect("Failed to create save file");
-                for log in logs {
-                    file.write_all(format!("{}\n", log).as_bytes()).expect("Failed to write to save file");
-                }
-            } else {
-                for log in logs {
-                    println!("{}", log);
-                }
+fn output(line: &str, file: &mut Option<File>) {
+    match file {
+        Some(file) => {
+            if let Err(err) = writeln!(file, "{line}") {
+                eprintln!("Failed to write to save file: {err}");
             }
-
-            std::thread::sleep(std::time::Duration::from_secs(5));
         }
-    } else {
-        let output = Command::new("journalctl")
-            .arg("-n")
-            .arg("1000")
-            .output()
-            .expect("Failed to execute journalctl");
+        None => println!("{line}"),
+    }
+}
 
-        let logs = String::from_utf8_lossy(&output.stdout)
-            .lines()
-            .map(|s| s.to_string())
-            .filter(|log| {
-                keyword_filter.as_ref().map_or(true, |k| log.contains(k))
-                    && unit_filter.as_ref().map_or(true, |u| log.contains(u))
-            })
-            .collect::<Vec<String>>();
-
-        if let Some(path) = &save_path {
-            let mut file = File::create(path).expect("Failed to create save file");
-            for log in logs {
-                file.write_all(format!("{}\n", log).as_bytes()).expect("Failed to write to save file");
-            }
-        } else {
-            for log in logs {
-                println!("{}", log);
-            }
+fn open_save_file(path: &str) -> File {
+    match File::create(path) {
+        Ok(file) => file,
+        Err(err) => {
+            eprintln!("Failed to create save file '{path}': {err}");
+            std::process::exit(1);
         }
     }
 }
