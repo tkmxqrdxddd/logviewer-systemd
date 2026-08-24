@@ -68,10 +68,7 @@ fn main() {
         }
     };
 
-    let mut file = match &args.save {
-        Some(path) => Some(open_save_file(path)),
-        None => None,
-    };
+    let mut file = args.save.as_ref().map(|path| open_save_file(path));
 
     for line in BufReader::new(stdout).lines() {
         match line {
@@ -95,7 +92,7 @@ fn main() {
 }
 
 fn filter(line: &str, args: &Args) -> bool {
-    args.keyword.as_ref().map_or(true, |k| line.contains(k))
+    args.keyword.as_ref().is_none_or(|k| line.contains(k))
 }
 
 fn output(line: &str, file: &mut Option<File>) {
